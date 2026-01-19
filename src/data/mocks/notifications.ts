@@ -1,0 +1,60 @@
+import { Notification } from "@/types";
+
+export const mockNotifications: Notification[] = [
+  {
+    id: 1,
+    type: "system",
+    title: "System Update Scheduled",
+    description: "Maintenance scheduled for tonight at 2:00 AM EST.",
+    time: "10 mins ago",
+    unread: true,
+  },
+  {
+    id: 2,
+    type: "order",
+    title: "New High-Value Order",
+    description: "Order #ORD-2024-889 received from Central Distribution.",
+    time: "45 mins ago",
+    unread: true,
+  },
+  {
+    id: 3,
+    type: "alert",
+    title: "Low Stock Warning",
+    description: "Item 'Premium Widgets' is below safety stock level.",
+    time: "2 hours ago",
+    unread: false,
+  },
+  {
+    id: 4,
+    type: "delivery",
+    title: "Delivery Completed",
+    description: "Shipment #DEL-992 has been successfully delivered.",
+    time: "5 hours ago",
+    unread: false,
+  },
+  {
+    id: 5,
+    type: "success",
+    title: "Target Reached",
+    description: "Daily sales target achieved ahead of schedule!",
+    time: "Yesterday",
+    unread: false,
+  },
+  {
+    id: 6,
+    type: "order",
+    title: "Order Processed",
+    description: "Stock refill #ORD-9915 is now ready for collection.",
+    time: "1 day ago",
+    unread: false,
+  },
+  {
+    id: 7,
+    type: "system",
+    title: "Security Alert",
+    description: "New login detected from a new device in Madrid, ES.",
+    time: "2 days ago",
+    unread: false,
+  },
+];
