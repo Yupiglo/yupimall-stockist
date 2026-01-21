@@ -31,11 +31,12 @@ import {
   LocalShipping as ShippingIcon,
 } from "@mui/icons-material";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useSearchParams, useRouter as useNavRouter } from "next/navigation";
+import { useEffect, useContext } from "react";
 import Link from "next/link";
 import { LinksEnum } from "@/utilities/pagesLInksEnum";
 import defaultAvatar from "@/assets/Avatar.png";
+import { CurrencyContext } from "@/helpers/currency/CurrencyContext";
 
 const orders = [
   {
@@ -63,6 +64,15 @@ export default function OrderDetailPage({
   const decodedId = decodeURIComponent(id);
 
   const { order, loading, updating, updateStatus } = useOrderDetail(decodedId);
+  const { selectedCurr } = useContext(CurrencyContext);
+
+  const formatPrice = (priceUSD: number) => {
+    const converted = priceUSD * selectedCurr.value;
+    if (selectedCurr.symbol === "FCFA" || selectedCurr.symbol === "₦") {
+      return `${Math.round(converted).toLocaleString()} ${selectedCurr.symbol}`;
+    }
+    return `${selectedCurr.symbol}${converted.toFixed(2)}`;
+  };
 
   useEffect(() => {
     if (searchParams.get("print") === "true") {
@@ -213,24 +223,24 @@ export default function OrderDetailPage({
           </Stack>
 
           <Stack direction="row" spacing={2}>
-            {order.status === 'shipped_to_stockist' && (
+            {order.status === 'validated' && (
               <Button
                 variant="contained"
                 disabled={updating}
-                onClick={() => updateStatus('reached_stockist')}
+                onClick={() => updateStatus('reached_warehouse')}
                 sx={{ borderRadius: '12px', px: 3 }}
               >
-                {updating ? <CircularProgress size={20} /> : 'Mark as Arrived'}
+                {updating ? <CircularProgress size={20} /> : 'Arrived at Warehouse'}
               </Button>
             )}
-            {order.status === 'reached_stockist' && (
+            {order.status === 'reached_warehouse' && (
               <Button
                 variant="contained"
                 disabled={updating}
-                onClick={() => updateStatus('delivered')}
+                onClick={() => updateStatus('shipped_to_stockist')}
                 sx={{ borderRadius: '12px', px: 3 }}
               >
-                {updating ? <CircularProgress size={20} /> : 'Finalize Delivery'}
+                {updating ? <CircularProgress size={20} /> : 'Ship to Stockist'}
               </Button>
             )}
           </Stack>
@@ -337,7 +347,7 @@ export default function OrderDetailPage({
                         WebkitTextFillColor: "transparent",
                       }}
                     >
-                      {order.total?.toLocaleString()} CFA
+                      {formatPrice(order.total || 0)}
                     </Typography>
                   </Stack>
                 </Stack>
@@ -511,7 +521,7 @@ export default function OrderDetailPage({
                           fontWeight="900"
                           color="primary.main"
                         >
-                          {item.price?.toLocaleString()} CFA
+                          {formatPrice(item.price || 0)}
                         </Typography>
                       </TableCell>
                     </TableRow>

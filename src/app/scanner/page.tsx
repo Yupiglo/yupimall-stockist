@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
     Box,
     Typography,
@@ -22,6 +22,7 @@ import {
     Error as ErrorIcon,
 } from "@mui/icons-material";
 import axiosInstance from "@/lib/axios";
+import { CurrencyContext } from "@/helpers/currency/CurrencyContext";
 
 export default function ScannerPage() {
     const [trackingCode, setTrackingCode] = useState("");
@@ -29,6 +30,15 @@ export default function ScannerPage() {
     const [order, setOrder] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const { selectedCurr } = useContext(CurrencyContext);
+
+    const formatPrice = (priceUSD: number) => {
+        const converted = priceUSD * selectedCurr.value;
+        if (selectedCurr.symbol === "FCFA" || selectedCurr.symbol === "₦") {
+            return `${Math.round(converted).toLocaleString()} ${selectedCurr.symbol}`;
+        }
+        return `${selectedCurr.symbol}${converted.toFixed(2)}`;
+    };
 
     const handleSearch = async (e?: any) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -162,7 +172,7 @@ export default function ScannerPage() {
                                     TOTAL
                                 </Typography>
                                 <Typography variant="h6" color="primary.main" fontWeight="900">
-                                    {order.total} CFA
+                                    {formatPrice(order.total || 0)}
                                 </Typography>
                             </Box>
                         </Stack>

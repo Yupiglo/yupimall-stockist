@@ -39,6 +39,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
     try {
       const result = await signIn("credentials", {
         email,
@@ -276,9 +279,8 @@ export default function LoginPage() {
                 label="Remember me for 30 days"
                 /> */}
               </Box>
-              <Link href="/recover" passHref>
+              <Link href="/recover">
                 <Typography
-                  component="a"
                   variant="body2"
                   color="primary"
                   sx={{ textDecoration: "none", fontWeight: 500 }}
@@ -300,26 +302,25 @@ export default function LoginPage() {
             </Button>
 
             <Grid container justifyContent="space-between" sx={{ mt: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Don&apos;t have an account?{" "}
-              </Typography>
+              <Link href="/register" style={{ textDecoration: "none" }}>
+                <Typography variant="body2" color="primary" sx={{ fontWeight: "bold" }}>
+                  Don&apos;t have an account? Sign Up
+                </Typography>
+              </Link>
 
-              <Typography>
-                <Link href="mailto:support@yupiflow.net" passHref>
-                  <Typography
-                    component="a"
-                    variant="body2"
-                    color="primary"
-                    sx={{
-                      textDecoration: "none",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Contact Us
-                  </Typography>
-                </Link>
-              </Typography>
+              <Link href="mailto:support@yupiflow.net">
+                <Typography
+                  variant="body2"
+                  color="primary"
+                  sx={{
+                    textDecoration: "none",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  Contact Us
+                </Typography>
+              </Link>
             </Grid>
           </Box>
         </Box>
