@@ -74,41 +74,45 @@ export function useWalletBalance() {
 export function useWalletTransactions(page = 1, perPage = 20) {
     const [transactions, setTransactions] = useState<PaginatedResponse<WalletTransaction> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetch = useCallback(async () => {
         try {
-            setLoading(true);
+            setLoading(true); setError(null);
             const res = await axiosInstance.get("wallet/transactions", { params: { page, per_page: perPage } });
             setTransactions(res.data.transactions);
-        } catch {
+        } catch (err: any) {
             setTransactions(null);
+            setError(err.response?.data?.message || "Impossible de charger les transactions.");
         } finally {
             setLoading(false);
         }
     }, [page, perPage]);
 
     useEffect(() => { fetch(); }, [fetch]);
-    return { transactions, loading, refresh: fetch };
+    return { transactions, loading, error, refresh: fetch };
 }
 
 export function useWalletPins(page = 1, perPage = 20) {
     const [pins, setPins] = useState<PaginatedResponse<WalletPin> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetch = useCallback(async () => {
         try {
-            setLoading(true);
+            setLoading(true); setError(null);
             const res = await axiosInstance.get("wallet/pins/history", { params: { page, per_page: perPage } });
             setPins(res.data.pins);
-        } catch {
+        } catch (err: any) {
             setPins(null);
+            setError(err.response?.data?.message || "Impossible de charger les PINs.");
         } finally {
             setLoading(false);
         }
     }, [page, perPage]);
 
     useEffect(() => { fetch(); }, [fetch]);
-    return { pins, loading, refresh: fetch };
+    return { pins, loading, error, refresh: fetch };
 }
 
 export async function generatePin(amount: number): Promise<{ code: string; amount: string; expires_at: string }> {
