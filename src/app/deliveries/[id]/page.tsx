@@ -82,8 +82,8 @@ export default function DeliveryDetailPage({
 
         if (foundDelivery) {
           setDelivery({
-            id: foundDelivery.id,
-            orderId: foundDelivery.orderId,
+            id: foundDelivery.id ?? decodedId,
+            orderId: foundDelivery.orderId ?? foundDelivery.id,
             courier: foundDelivery.courier || foundDelivery.deliveryPerson?.name || "--",
             status: foundDelivery.status || "Pending",
             address: foundDelivery.address || "--",
