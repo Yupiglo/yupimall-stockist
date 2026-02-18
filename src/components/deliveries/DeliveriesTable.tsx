@@ -96,9 +96,9 @@ export default function DeliveriesTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {deliveries.map((delivery) => (
+          {deliveries.map((delivery, index) => (
             <TableRow
-              key={delivery.id}
+              key={delivery.id ?? index}
               hover
               onClick={() => router.push(`/deliveries/${delivery.id}`)}
               sx={{
@@ -118,15 +118,15 @@ export default function DeliveriesTable() {
               <TableCell>
                 <Box>
                   <Typography variant="body2" fontWeight="700">
-                    {delivery.orderId}
+                    {delivery.orderId || "—"}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {delivery.customer}
+                    {delivery.customer || "—"}
                   </Typography>
                 </Box>
               </TableCell>
               <TableCell sx={{ fontWeight: "600" }}>
-                {delivery.courier}
+                {delivery.courier || delivery.deliveryPerson?.name || "—"}
               </TableCell>
               <TableCell
                 sx={{
@@ -137,14 +137,14 @@ export default function DeliveriesTable() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {delivery.address}
+                {delivery.address || "—"}
               </TableCell>
               <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
                 {delivery.date ? new Date(delivery.date).toLocaleDateString("fr-FR") : "—"}
               </TableCell>
               <TableCell>
                 <Chip
-                  label={delivery.status}
+                  label={delivery.status || "—"}
                   size="small"
                   sx={{
                     fontWeight: "800",

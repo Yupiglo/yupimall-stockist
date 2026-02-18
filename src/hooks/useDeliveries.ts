@@ -14,13 +14,14 @@ export interface DeliveryPerson {
 }
 
 export interface Delivery {
-    id: number;
-    orderId: string;
-    customer: string;
-    courier: string;
-    address: string;
-    date: string;
-    status: string;
+    id?: number | string;
+    orderId?: string | number;
+    customer?: string;
+    courier?: string;
+    address?: string;
+    date?: string;
+    status?: string;
+    deliveryPerson?: { id?: number | string; name?: string };
 }
 
 export function useDeliveryPersonnel() {
