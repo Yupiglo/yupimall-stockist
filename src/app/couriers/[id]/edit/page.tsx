@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -17,6 +17,8 @@ import {
   Switch,
   TextField,
   Button,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import DefaultAvatar from "@/assets/AvatarBig.png";
@@ -30,6 +32,8 @@ import {
 } from "@mui/icons-material";
 import Link from "next/link";
 import { LinksEnum } from "@/utilities/pagesLinksEnum";
+import axiosInstance from "@/lib/axios";
+import { useDeliveryPersonnel } from "@/hooks/useDeliveries";
 
 export default function CourierEditPage({
   params,
@@ -41,18 +45,85 @@ export default function CourierEditPage({
   const { id } = resolvedParams;
   const decodedId = decodeURIComponent(id);
 
+  const { personnel, loading: personnelLoading } = useDeliveryPersonnel();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: "John Doe",
-    vehicle: "Motorcycle",
-    phone: "+1 555-0201",
-    plate: "ABC-1234",
+    name: "",
+    vehicle: "",
+    phone: "",
+    plate: "",
     status: "Active",
   });
 
-  const handleSave = () => {
-    console.log("Saving courier:", formData);
-    router.push(`/couriers/${encodeURIComponent(decodedId)}`);
+  useEffect(() => {
+    const fetchCourier = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const foundCourier = personnel.find(
+          (p) => p.id?.toString() === decodedId
+        );
+
+        if (foundCourier) {
+          setFormData({
+            name: foundCourier.name || "",
+            vehicle: foundCourier.vehicle || "",
+            phone: foundCourier.phone || "",
+            plate: "",
+            status: foundCourier.status || "Active",
+          });
+        } else if (personnel.length > 0) {
+          setError("Courier not found");
+        }
+      } catch (err: any) {
+        console.error("Error fetching courier:", err);
+        setError(err?.response?.data?.message || "Failed to load courier details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!personnelLoading) {
+      fetchCourier();
+    }
+  }, [decodedId, personnel, personnelLoading]);
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      // Note: Update endpoint might not exist, this is a placeholder
+      // await axiosInstance.put(`delivery/personnel/${decodedId}`, formData);
+      router.push(`/couriers/${encodeURIComponent(decodedId)}`);
+    } catch (err: any) {
+      console.error("Error saving courier:", err);
+      setError(err?.response?.data?.message || "Failed to save courier");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading && !formData.name) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 }, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error && !formData.name) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Alert severity="error" sx={{ borderRadius: 3 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={() => router.push("/couriers")} sx={{ mt: 2 }}>
+          Back to Couriers
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>

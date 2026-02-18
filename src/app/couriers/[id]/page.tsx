@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -15,6 +15,8 @@ import {
   Divider,
   Grid,
   Breadcrumbs,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
@@ -31,18 +33,20 @@ import {
 import Link from "next/link";
 import { LinksEnum } from "@/utilities/pagesLinksEnum";
 import DefaultAvatar from "@/assets/AvatarBig.png";
+import axiosInstance from "@/lib/axios";
+import { useDeliveryPersonnel } from "@/hooks/useDeliveries";
 
-const couriers = [
-  {
-    id: "#COU-101",
-    name: "John Doe",
-    vehicle: "Motorcycle",
-    phone: "+1 555-0201",
-    plate: "ABC-1234",
-    status: "Active",
-    rating: 4.8,
-  },
-];
+interface CourierData {
+  id: number | string;
+  name: string;
+  vehicle?: string;
+  phone?: string;
+  plate?: string;
+  status: string;
+  rating?: number;
+  totalDeliveries?: number;
+  performance?: number;
+}
 
 export default function CourierDetailPage({
   params,
@@ -54,21 +58,101 @@ export default function CourierDetailPage({
   const { id } = resolvedParams;
   const decodedId = decodeURIComponent(id);
 
-  // Mock finding courier by ID
-  const courier = couriers.find((c) => c.id === decodedId) || couriers[0];
+  const { personnel, loading: personnelLoading } = useDeliveryPersonnel();
+  const [courier, setCourier] = useState<CourierData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    deliveriesToday: 0,
+    performance: 0,
+    rating: 0,
+  });
+
+  useEffect(() => {
+    const fetchCourier = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Try to find courier from personnel list
+        const foundCourier = personnel.find(
+          (p) => p.id?.toString() === decodedId
+        );
+
+        if (foundCourier) {
+          setCourier({
+            id: foundCourier.id,
+            name: foundCourier.name,
+            vehicle: foundCourier.vehicle || "--",
+            phone: foundCourier.phone || "--",
+            plate: "--",
+            status: foundCourier.status || "Active",
+            totalDeliveries: foundCourier.totalDeliveries || 0,
+          });
+
+          // Fetch additional stats if available
+          try {
+            const statsResponse = await axiosInstance.get(`delivery/personnel/${foundCourier.id}/stats`);
+            if (statsResponse.data) {
+              setStats({
+                deliveriesToday: statsResponse.data.deliveriesToday || 0,
+                performance: statsResponse.data.performance || 0,
+                rating: statsResponse.data.rating || 0,
+              });
+            }
+          } catch (statsErr) {
+            // Stats endpoint might not exist, use defaults
+            setStats({
+              deliveriesToday: 0,
+              performance: 0,
+              rating: 0,
+            });
+          }
+        } else if (personnel.length > 0) {
+          // If not found and we have personnel loaded, courier doesn't exist
+          setError("Courier not found");
+        }
+      } catch (err: any) {
+        console.error("Error fetching courier:", err);
+        setError(err?.response?.data?.message || "Failed to load courier details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!personnelLoading) {
+      fetchCourier();
+    }
+  }, [decodedId, personnel, personnelLoading]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "success";
-      case "On Delivery":
-        return "info";
-      case "Offline":
-        return "default";
-      default:
-        return "default";
-    }
+    const s = status?.toLowerCase() || "";
+    if (s === "active" || s === "actif") return "success";
+    if (s === "on delivery" || s === "en livraison") return "info";
+    if (s === "offline" || s === "hors ligne") return "default";
+    return "default";
   };
+
+  if (loading || personnelLoading) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 }, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error || !courier) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Alert severity="error" sx={{ borderRadius: 3 }}>
+          {error || "Courier not found"}
+        </Alert>
+        <Button variant="contained" onClick={() => router.push("/couriers")} sx={{ mt: 2 }}>
+          Back to Couriers
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -234,10 +318,10 @@ export default function CourierDetailPage({
                   {courier.name.charAt(0)}
                 </Avatar>
                 <Typography variant="h5" fontWeight="bold">
-                  {courier.name}
+                  {courier.name || "--"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {courier.id}
+                  {courier.id?.toString().startsWith("#") ? courier.id : `#${courier.id}`}
                 </Typography>
                 <Chip
                   label={courier.status}
@@ -296,7 +380,7 @@ export default function CourierDetailPage({
                         Vehicle Type
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        {courier.vehicle}
+                        {courier.vehicle || "--"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -314,7 +398,7 @@ export default function CourierDetailPage({
                         variant="body2"
                         sx={{ fontFamily: "monospace", fontWeight: "bold" }}
                       >
-                        {courier.plate}
+                        {courier.plate || "--"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -329,7 +413,7 @@ export default function CourierDetailPage({
                         Phone
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        {courier.phone}
+                        {courier.phone || "--"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -344,19 +428,19 @@ export default function CourierDetailPage({
             {[
               {
                 label: "Courier Rating",
-                value: `${courier.rating}/5.0`,
+                value: stats.rating > 0 ? `${stats.rating.toFixed(1)}/5.0` : "--",
                 icon: <RatingIcon />,
                 color: "warning",
               },
               {
                 label: "Deliveries Today",
-                value: "8",
+                value: stats.deliveriesToday > 0 ? stats.deliveriesToday.toString() : "--",
                 icon: <VehicleIcon />,
                 color: "primary",
               },
               {
                 label: "Performance",
-                value: "98%",
+                value: stats.performance > 0 ? `${stats.performance}%` : "--",
                 icon: <PerformanceIcon />,
                 color: "success",
               },

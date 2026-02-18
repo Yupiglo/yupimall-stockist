@@ -12,18 +12,48 @@ import {
   Box,
   Stack,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   Visibility as ViewIcon,
   Print as PrintIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-
-import { mockEntries } from "@/data/mocks/entries";
-import { Entry } from "@/types";
+import { useStockEntries } from "@/hooks/useStock";
 
 export default function EntriesTable() {
   const router = useRouter();
+  const { entries, loading, error } = useStockEntries();
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>;
+  }
+
+  if (entries.length === 0) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography color="text.secondary">Aucune entrée de stock</Typography>
+      </Box>
+    );
+  }
+
+  const headCellSx = {
+    fontWeight: "800",
+    textTransform: "uppercase" as const,
+    fontSize: "0.75rem",
+    letterSpacing: 1,
+    color: "text.secondary",
+    py: 2.5,
+  };
 
   return (
     <TableContainer
@@ -50,88 +80,19 @@ export default function EntriesTable() {
                   : "rgba(255, 255, 255, 0.02)",
             }}
           >
-            <TableCell
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Entry ID
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Product
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Quantity
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Supplier
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Date
-            </TableCell>
-            <TableCell
-              align="right"
-              sx={{
-                fontWeight: "800",
-                textTransform: "uppercase",
-                fontSize: "0.75rem",
-                letterSpacing: 1,
-                color: "text.secondary",
-                py: 2.5,
-              }}
-            >
-              Actions
-            </TableCell>
+            <TableCell sx={headCellSx}>ID</TableCell>
+            <TableCell sx={headCellSx}>Produit</TableCell>
+            <TableCell sx={headCellSx}>Quantité</TableCell>
+            <TableCell sx={headCellSx}>Fournisseur</TableCell>
+            <TableCell sx={headCellSx}>Date</TableCell>
+            <TableCell align="right" sx={headCellSx}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {mockEntries.map((entry: Entry) => (
+          {entries.map((entry) => (
             <TableRow
               key={entry.id}
-              onClick={() =>
-                router.push(`/entries/${encodeURIComponent(entry.id)}`)
-              }
+              onClick={() => router.push(`/entries/${entry.id}`)}
               sx={{
                 cursor: "pointer",
                 transition: "all 0.2s",
@@ -144,31 +105,21 @@ export default function EntriesTable() {
               }}
             >
               <TableCell>
-                <Typography
-                  variant="body2"
-                  fontWeight="800"
-                  color="primary.main"
-                >
-                  {entry.id}
+                <Typography variant="body2" fontWeight="800" color="primary.main">
+                  #{entry.id}
                 </Typography>
               </TableCell>
               <TableCell>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <Box>
-                    <Typography
-                      variant="body2"
-                      fontWeight="900"
-                      sx={{ mb: 0.2 }}
-                    >
-                      {entry.product}
+                    <Typography variant="body2" fontWeight="900" sx={{ mb: 0.2 }}>
+                      {entry.product_name || entry.product}
                     </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      fontWeight="700"
-                    >
-                      SKU: {entry.sku}
-                    </Typography>
+                    {entry.sku && (
+                      <Typography variant="caption" color="text.secondary" fontWeight="700">
+                        SKU: {entry.sku}
+                      </Typography>
+                    )}
                   </Box>
                 </Stack>
               </TableCell>
@@ -188,26 +139,20 @@ export default function EntriesTable() {
                 </Box>
               </TableCell>
               <TableCell>
-                <Typography
-                  variant="body2"
-                  fontWeight="600"
-                  color="text.secondary"
-                >
-                  {entry.supplier}
+                <Typography variant="body2" fontWeight="600" color="text.secondary">
+                  {entry.supplier || entry.distributor_name || "—"}
                 </Typography>
               </TableCell>
               <TableCell>
-                <Typography
-                  variant="caption"
-                  fontWeight="700"
-                  color="text.secondary"
-                >
-                  {entry.date}
+                <Typography variant="caption" fontWeight="700" color="text.secondary">
+                  {entry.created_at
+                    ? new Date(entry.created_at).toLocaleDateString("fr-FR")
+                    : entry.date || "—"}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                  <Tooltip title="View Receipt">
+                  <Tooltip title="Voir détails">
                     <IconButton
                       size="small"
                       sx={{
@@ -217,13 +162,13 @@ export default function EntriesTable() {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/entries/${encodeURIComponent(entry.id)}`);
+                        router.push(`/entries/${entry.id}`);
                       }}
                     >
                       <ViewIcon fontSize="inherit" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Print Slip">
+                  <Tooltip title="Imprimer">
                     <IconButton
                       size="small"
                       sx={{
@@ -233,9 +178,7 @@ export default function EntriesTable() {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(
-                          `/entries/${encodeURIComponent(entry.id)}?print=true`
-                        );
+                        router.push(`/entries/${entry.id}?print=true`);
                       }}
                     >
                       <PrintIcon fontSize="inherit" />

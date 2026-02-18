@@ -14,69 +14,48 @@ import {
   Box,
   Stack,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   Visibility as ViewIcon,
   Print as PrintIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-
-const deliveries = [
-  {
-    id: "#DEL-101",
-    orderId: "#ORD-9921",
-    customer: "Alice Johnson",
-    courier: "John Doe",
-    address: "123 Main St, New York",
-    date: "Jun 12, 2026, 02:00 PM",
-    status: "Delivered",
-  },
-  {
-    id: "#DEL-102",
-    orderId: "#ORD-9920",
-    customer: "Mark Spencer",
-    courier: "Jane Smith",
-    address: "456 Side Ave, Brooklyn",
-    date: "Jun 12, 2026, 03:45 PM",
-    status: "In Transit",
-  },
-  {
-    id: "#DEL-103",
-    orderId: "#ORD-9919",
-    customer: "Elena Gomez",
-    courier: "Mike Tyson",
-    address: "789 High Rd, Queens",
-    date: "Jun 11, 2026, 11:00 AM",
-    status: "Pending",
-  },
-  {
-    id: "#DEL-104",
-    orderId: "#ORD-9918",
-    customer: "David Lee",
-    courier: "John Doe",
-    address: "321 Park Ln, Manhattan",
-    date: "Jun 10, 2026, 09:30 AM",
-    status: "Cancelled",
-  },
-];
+import { useActiveDeliveries } from "@/hooks/useDeliveries";
 
 export default function DeliveriesTable() {
   const router = useRouter();
+  const { deliveries, loading, error } = useActiveDeliveries();
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Delivered":
-        return "success";
-      case "In Transit":
-        return "info";
-      case "Pending":
-        return "warning";
-      case "Cancelled":
-        return "error";
-      default:
-        return "default";
-    }
+    const s = status.toLowerCase();
+    if (s === "delivered" || s === "livré") return "success";
+    if (s === "in transit" || s === "en transit" || s === "in_transit") return "info";
+    if (s === "pending" || s === "en attente") return "warning";
+    if (s === "cancelled" || s === "annulé") return "error";
+    return "default";
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>;
+  }
+
+  if (deliveries.length === 0) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography color="text.secondary">Aucune livraison trouvée</Typography>
+      </Box>
+    );
+  }
 
   return (
     <TableContainer
@@ -98,15 +77,7 @@ export default function DeliveriesTable() {
       <Table sx={{ minWidth: 650 }}>
         <TableHead>
           <TableRow sx={{ bgcolor: (theme) => theme.palette.action.hover }}>
-            {[
-              "Delivery ID",
-              "Order & Customer",
-              "Courier",
-              "Address",
-              "Date",
-              "Status",
-              "Actions",
-            ].map((head) => (
+            {["ID Livraison", "Commande & Client", "Livreur", "Adresse", "Date", "Statut", "Actions"].map((head) => (
               <TableCell
                 key={head}
                 align={head === "Actions" ? "right" : "left"}
@@ -129,9 +100,7 @@ export default function DeliveriesTable() {
             <TableRow
               key={delivery.id}
               hover
-              onClick={() =>
-                router.push(`/deliveries/${encodeURIComponent(delivery.id)}`)
-              }
+              onClick={() => router.push(`/deliveries/${delivery.id}`)}
               sx={{
                 cursor: "pointer",
                 transition: "all 0.2s",
@@ -144,7 +113,7 @@ export default function DeliveriesTable() {
               }}
             >
               <TableCell sx={{ fontWeight: "700", color: "primary.main" }}>
-                {delivery.id}
+                #{delivery.id}
               </TableCell>
               <TableCell>
                 <Box>
@@ -171,7 +140,7 @@ export default function DeliveriesTable() {
                 {delivery.address}
               </TableCell>
               <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-                {delivery.date}
+                {delivery.date ? new Date(delivery.date).toLocaleDateString("fr-FR") : "—"}
               </TableCell>
               <TableCell>
                 <Chip
@@ -200,14 +169,10 @@ export default function DeliveriesTable() {
                   justifyContent="flex-end"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Tooltip title="View Details">
+                  <Tooltip title="Voir détails">
                     <IconButton
                       size="small"
-                      onClick={() =>
-                        router.push(
-                          `/deliveries/${encodeURIComponent(delivery.id)}`
-                        )
-                      }
+                      onClick={() => router.push(`/deliveries/${delivery.id}`)}
                       sx={{
                         color: "primary.main",
                         bgcolor: "primary.lighter",
@@ -218,16 +183,10 @@ export default function DeliveriesTable() {
                       <ViewIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Print Delivery">
+                  <Tooltip title="Imprimer">
                     <IconButton
                       size="small"
-                      onClick={() =>
-                        router.push(
-                          `/deliveries/${encodeURIComponent(
-                            delivery.id
-                          )}?print=true`
-                        )
-                      }
+                      onClick={() => router.push(`/deliveries/${delivery.id}?print=true`)}
                       sx={{
                         color: "info.main",
                         bgcolor: "info.lighter",

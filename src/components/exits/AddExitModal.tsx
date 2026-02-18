@@ -10,23 +10,24 @@ import {
   Stack,
   MenuItem,
   IconButton,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useState } from "react";
+import { useProducts } from "@/hooks/useProducts";
+import { useStockExits } from "@/hooks/useStock";
 
 interface AddExitModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const mockProducts = [
-  { id: 1, name: "Classic Leather Jacket", sku: "JKT-001" },
-  { id: 2, name: "Wireless Headphones", sku: "AUD-005" },
-  { id: 3, name: "Organic Coffee Beans", sku: "CFE-012" },
-  { id: 4, name: "Smart Watch Series 5", sku: "WCH-002" },
-];
-
 export default function AddExitModal({ open, onClose }: AddExitModalProps) {
+  const { products, loading: productsLoading } = useProducts();
+  const { createExit } = useStockExits();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     productId: "",
     quantity: "",
@@ -34,10 +35,24 @@ export default function AddExitModal({ open, onClose }: AddExitModalProps) {
     notes: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Nueva salida:", formData);
-    onClose();
+    try {
+      setSubmitting(true);
+      setError(null);
+      await createExit({
+        product_id: Number(formData.productId),
+        quantity: Number(formData.quantity),
+        destination: formData.destination,
+        notes: formData.notes,
+      });
+      setFormData({ productId: "", quantity: "", destination: "", notes: "" });
+      onClose();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Erreur lors de la création");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -46,23 +61,13 @@ export default function AddExitModal({ open, onClose }: AddExitModalProps) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "16px",
-          backgroundImage: "none",
-        },
-      }}
+      PaperProps={{ sx: { borderRadius: "16px", backgroundImage: "none" } }}
     >
       <DialogTitle sx={{ m: 0, p: 3, fontWeight: "bold", fontSize: "1.25rem" }}>
-        New Stock Exit
+        Nouvelle sortie de stock
         <IconButton
           onClick={onClose}
-          sx={{
-            position: "absolute",
-            right: 16,
-            top: 24,
-            color: "text.secondary",
-          }}
+          sx={{ position: "absolute", right: 16, top: 24, color: "text.secondary" }}
         >
           <CloseIcon />
         </IconButton>
@@ -71,44 +76,46 @@ export default function AddExitModal({ open, onClose }: AddExitModalProps) {
       <form onSubmit={handleSubmit}>
         <DialogContent sx={{ p: 4, pt: 1 }}>
           <Stack spacing={3}>
+            {error && <Alert severity="error">{error}</Alert>}
             <TextField
               select
-              label="Select Product"
+              label="Sélectionner un produit"
               required
               fullWidth
               value={formData.productId}
-              onChange={(e) =>
-                setFormData({ ...formData, productId: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
+              disabled={productsLoading}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
             >
-              {mockProducts.map((product) => (
-                <MenuItem key={product.id} value={product.id}>
-                  {product.name} ({product.sku})
-                </MenuItem>
-              ))}
+              {productsLoading ? (
+                <MenuItem disabled><CircularProgress size={16} sx={{ mr: 1 }} /> Chargement...</MenuItem>
+              ) : (products || []).length > 0 ? (
+                (products || []).map((product: any) => (
+                  <MenuItem key={product.id} value={product.id}>
+                    {product.name || product.title} {product.sku ? `(${product.sku})` : ""}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>Aucun produit</MenuItem>
+              )}
             </TextField>
 
             <TextField
-              label="Quantity"
+              label="Quantité"
               type="number"
               required
               fullWidth
               value={formData.quantity}
-              onChange={(e) =>
-                setFormData({ ...formData, quantity: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
             />
 
             <TextField
-              label="Destination / Customer"
+              label="Destination / Client"
               required
               fullWidth
               value={formData.destination}
-              onChange={(e) =>
-                setFormData({ ...formData, destination: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
             />
 
@@ -118,9 +125,7 @@ export default function AddExitModal({ open, onClose }: AddExitModalProps) {
               rows={2}
               fullWidth
               value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
             />
           </Stack>
@@ -129,30 +134,17 @@ export default function AddExitModal({ open, onClose }: AddExitModalProps) {
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button
             onClick={onClose}
-            sx={{
-              textTransform: "none",
-              fontWeight: "bold",
-              borderRadius: "10px",
-              px: 3,
-              py: 1.5,
-              color: "text.secondary",
-            }}
+            sx={{ textTransform: "none", fontWeight: "bold", borderRadius: "10px", px: 3, py: 1.5, color: "text.secondary" }}
           >
-            Cancel
+            Annuler
           </Button>
           <Button
             type="submit"
             variant="contained"
-            sx={{
-              textTransform: "none",
-              fontWeight: "bold",
-              borderRadius: "10px",
-              px: 4,
-              py: 1.5,
-              boxShadow: "none",
-            }}
+            disabled={submitting}
+            sx={{ textTransform: "none", fontWeight: "bold", borderRadius: "10px", px: 4, py: 1.5, boxShadow: "none" }}
           >
-            Register Exit
+            {submitting ? <CircularProgress size={20} /> : "Enregistrer la sortie"}
           </Button>
         </DialogActions>
       </form>
