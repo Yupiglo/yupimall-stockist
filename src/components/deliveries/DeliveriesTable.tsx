@@ -156,9 +156,9 @@ export default function DeliveriesTable() {
                       theme.palette.mode === "light"
                         ? "common.white"
                         : "rgba(255, 255, 255, 0.05)",
-                    color: `${getStatusColor(delivery.status)}.main`,
+                    color: `${getStatusColor(delivery.status || "")}.main`,
                     border: "1px solid",
-                    borderColor: `${getStatusColor(delivery.status)}.main`,
+                    borderColor: `${getStatusColor(delivery.status || "")}.main`,
                   }}
                 />
               </TableCell>
