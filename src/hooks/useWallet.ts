@@ -48,10 +48,20 @@ export function useWalletBalance() {
     const fetch = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
             const res = await axiosInstance.get("wallet/balance");
             setWallet(res.data.wallet);
-        } catch (err) {
-            setError("Impossible de charger le wallet");
+        } catch (err: any) {
+            const status = err.response?.status;
+            const msg = err.response?.data?.message;
+            if (status === 401) {
+                setError("Session expirée. Veuillez vous reconnecter.");
+            } else if (msg) {
+                setError(`Erreur: ${msg}`);
+            } else {
+                setError("Impossible de charger le wallet. Vérifiez votre connexion.");
+            }
+            console.error("Wallet balance error:", status, msg, err);
         } finally {
             setLoading(false);
         }

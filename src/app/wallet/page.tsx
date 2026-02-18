@@ -1,11 +1,12 @@
 "use client";
 
-import { Box, Grid, Card, CardContent, Typography, Stack, Chip, CircularProgress, Button } from "@mui/material";
+import { Box, Grid, Card, CardContent, Typography, Stack, Chip, CircularProgress, Button, Alert } from "@mui/material";
 import {
     AccountBalanceWallet as WalletIcon,
     Pin as PinIcon,
     Receipt as ReceiptIcon,
     Add as AddIcon,
+    Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { useWalletBalance, useWalletTransactions, useWalletPins } from "@/hooks/useWallet";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,7 @@ import { LinksEnum } from "@/utilities/pagesLinksEnum";
 
 export default function WalletDashboard() {
     const router = useRouter();
-    const { wallet, loading: walletLoading } = useWalletBalance();
+    const { wallet, loading: walletLoading, error: walletError, refresh: refreshWallet } = useWalletBalance();
     const { transactions, loading: txLoading } = useWalletTransactions(1, 5);
     const { pins, loading: pinsLoading } = useWalletPins(1, 5);
 
@@ -31,15 +32,31 @@ export default function WalletDashboard() {
         <Box sx={{ p: { xs: 2, md: 3 } }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
                 <Typography variant="h4" fontWeight={900}>Wallet</Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => router.push(LinksEnum.walletGenerate)}
-                    sx={{ borderRadius: 3, fontWeight: 700, px: 3, py: 1.5, textTransform: "none" }}
-                >
-                    Générer un PIN
-                </Button>
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={refreshWallet}
+                        sx={{ borderRadius: 3, fontWeight: 700, textTransform: "none" }}
+                    >
+                        Rafraîchir
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => router.push(LinksEnum.walletGenerate)}
+                        sx={{ borderRadius: 3, fontWeight: 700, px: 3, py: 1.5, textTransform: "none" }}
+                    >
+                        Générer un PIN
+                    </Button>
+                </Stack>
             </Stack>
+
+            {walletError && (
+                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                    {walletError}
+                </Alert>
+            )}
 
             {/* Stats */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
