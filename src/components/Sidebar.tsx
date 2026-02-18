@@ -30,10 +30,12 @@ import {
   Input as EntriesIcon,
   Output as ExitsIcon,
   QrCodeScanner as ScannerIcon,
+  AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
 
 const navItems = [
   { name: "Dashboard", href: LinksEnum.dashboard, icon: <DashboardIcon /> },
+  { name: "Wallet", href: LinksEnum.wallet, icon: <WalletIcon /> },
   { name: "Scanner", href: LinksEnum.scanner, icon: <ScannerIcon /> },
   { name: "Products", href: LinksEnum.products, icon: <ProductsIcon /> },
   { name: "Orders", href: LinksEnum.orders, icon: <OrdersIcon /> },

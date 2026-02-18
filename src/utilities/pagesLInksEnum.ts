@@ -15,4 +15,9 @@ export enum LinksEnum {
   notifications = "/notifications",
   profile = "/profile",
   scanner = "/scanner",
+
+  wallet = "/wallet",
+  walletGenerate = "/wallet/generate",
+  walletPins = "/wallet/pins",
+  walletTransactions = "/wallet/transactions",
 }
