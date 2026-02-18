@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Order Detail | YupiFlow Stockist",
@@ -11,5 +10,5 @@ export default function OrderLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  return children;
 }
