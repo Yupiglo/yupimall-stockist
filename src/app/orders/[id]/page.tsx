@@ -31,6 +31,7 @@ import {
   Inventory as InventoryIcon,
   Print as PrintIcon,
   CheckCircle as DeliveredIcon,
+  OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
 
 import { useSearchParams } from "next/navigation";
@@ -196,6 +197,17 @@ export default function OrderDetailPage({
               sx={{ borderRadius: '12px', px: 2.5 }}
             >
               Imprimer
+            </Button>
+            <Button
+              component={Link}
+              href={`${process.env.NEXT_PUBLIC_YUPIMALL_URL || 'https://yupimall.net'}/track?code=${encodeURIComponent(order.trackingCode || '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="outlined"
+              startIcon={<OpenInNewIcon />}
+              sx={{ borderRadius: '12px', px: 2.5 }}
+            >
+              Voir le suivi client
             </Button>
             {order.status === 'shipped_to_stockist' && (
               <Button
