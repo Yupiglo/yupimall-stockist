@@ -10,10 +10,11 @@ import { useWalletPins } from "@/hooks/useWallet";
 import { useRouter } from "next/navigation";
 import { LinksEnum } from "@/utilities/pagesLinksEnum";
 
-const statusConfig: Record<string, { color: "success" | "default" | "error"; label: string }> = {
+const statusConfig: Record<string, { color: "success" | "default" | "error" | "info"; label: string }> = {
     active: { color: "success", label: "Actif" },
     used: { color: "default", label: "Utilisé" },
     expired: { color: "error", label: "Expiré" },
+    refunded: { color: "info", label: "Remboursé" },
 };
 
 export default function PinHistoryPage() {
